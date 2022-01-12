@@ -1,5 +1,7 @@
 import { Color3, MeshBuilder, PhysicsImpostor, Vector3, VertexBuffer } from "@babylonjs/core"
 import { Body, Vec3 } from "cannon"
+import { useClick } from "react-babylonjs"
+import { randomizeVector } from "../../utils/math"
 
 interface DiceProps {
   name: string
@@ -46,16 +48,20 @@ const dices = {
     ]} //10
 }
 const Dice: React.FC<DiceProps> = ({name, type, color, position}) => {
+  const [ref] = useClick(() => {
+    const dir = randomizeVector(), pos = randomizeVector()
+    ref.current?.physicsImpostor?.applyImpulse(dir.scale(20), pos.scale(10))
+  })
+
   if(name === 'd6') {
     return (
       <box name={name} size={2} position={position} >
         <standardMaterial name={`${name}-material`} diffuseColor={color} />
-        <physicsImpostor type={PhysicsImpostor.BoxImpostor} _options={{mass: 1, restitution: 0.5}} />
+        <physicsImpostor type={PhysicsImpostor.BoxImpostor} _options={{mass: 15, restitution: 0.5}} />
       </box>
     )
   } else {
     const custom = {name: 'Pentagonal Trapezohedron', vertex: dices.tra.vertices, face: dices.tra.faces}
-
     const polyhedron = type==='tra' ?
       MeshBuilder.CreatePolyhedron(name, {type: dices[type].key, size: dices[type].size, custom: custom })
       :
@@ -63,13 +69,12 @@ const Dice: React.FC<DiceProps> = ({name, type, color, position}) => {
     polyhedron.rotate(new Vector3(1,0,0), .5)
 
     return (
-      <mesh name={name} position={position} fromInstance={polyhedron} disposeInstanceOnUnmount>
+      <mesh ref={ref} name={name} position={position} fromInstance={polyhedron} disposeInstanceOnUnmount>
         <standardMaterial name={`${name}-material`} diffuseColor={color} />
-        {/* <physicsImpostor type={PhysicsImpostor.MeshImpostor} _options={{mass: 5, restitution: .5}} /> */}
+        <physicsImpostor type={PhysicsImpostor.MeshImpostor} _options={{mass: 10, restitution: .4}} />
       </mesh>
     )
   }
-
 }
 
 export default Dice
